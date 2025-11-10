@@ -2,47 +2,46 @@
 Database Schemas
 
 Define your MongoDB collection schemas here using Pydantic models.
-These schemas are used for data validation in your application.
-
 Each Pydantic model represents a collection in your database.
 Model name is converted to lowercase for the collection name:
 - User -> "user" collection
-- Product -> "product" collection
-- BlogPost -> "blogs" collection
+- Appointment -> "appointment" collection
+- BlogPost -> "blogpost" collection
+- DoctorSettings -> "doctorsettings" collection
 """
 
-from pydantic import BaseModel, Field
-from typing import Optional
+import datetime as _dt
+from pydantic import BaseModel, Field, EmailStr
+from typing import Optional, List
 
-# Example schemas (replace with your own):
-
-class User(BaseModel):
+class Appointment(BaseModel):
     """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
+    Appointments booked by patients
+    Collection: "appointment"
     """
-    name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
-    is_active: bool = Field(True, description="Whether user is active")
+    name: str = Field(..., description="Patient full name")
+    email: EmailStr = Field(..., description="Patient email")
+    phone: Optional[str] = Field(None, description="Contact number")
+    date: _dt.date = Field(..., description="Appointment date (YYYY-MM-DD)")
+    time: str = Field(..., description="Time slot (e.g., 10:30 AM)")
+    note: Optional[str] = Field(None, description="Short note or reason")
+    status: str = Field("pending", description="Status: pending|confirmed|cancelled")
 
-class Product(BaseModel):
+class BlogPost(BaseModel):
     """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
+    Blog posts authored by the doctor/developer
+    Collection: "blogpost"
     """
-    title: str = Field(..., description="Product title")
-    description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
-    in_stock: bool = Field(True, description="Whether product is in stock")
+    title: str = Field(..., description="Post title")
+    content: str = Field(..., description="Rich text/markdown content")
+    cover_image: Optional[str] = Field(None, description="Optional cover image URL")
+    tags: List[str] = Field(default_factory=list, description="Tags for the post")
+    published: bool = Field(False, description="Whether the post is visible publicly")
 
-# Add your own schemas here:
-# --------------------------------------------------
-
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+class DoctorSettings(BaseModel):
+    """
+    Admin-editable settings
+    Collection: "doctorsettings"
+    """
+    notification_email: EmailStr = Field(..., description="Email to receive appointment notifications")
+    available_slots: Optional[List[str]] = Field(default_factory=list, description="List of allowed slot strings like '09:00', '10:30'")
